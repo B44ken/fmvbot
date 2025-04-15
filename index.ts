@@ -5,6 +5,7 @@ import { REST, Routes, Client, Events, GatewayIntentBits, ClientUser, Guild } fr
 
 import { PlayersDB } from './db.js'
 const db = new PlayersDB()
+db.getTop(10)
 
 const commands = [
     {
@@ -18,6 +19,10 @@ const commands = [
                 'required': false
             }
         ]
+    }, {
+        'name': 'leaderboard',
+        'description': 'top 10 farmers',
+        'options': [],
     }
 ]
 
@@ -46,12 +51,21 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (commandName === 'pervert') {
         const targetUser = options.getUser('user') ? `<@${options.getUser('user').id}>` : interaction.user.displayName
         await interaction.reply({
-            content: `${targetUser} is a pervert`,
             embeds: [{
-                image: {
-                    url: pervertImage
-                }
+                description: `**${targetUser} is a pervert**`,
+                image: { url: pervertImage }
             }]
+        })
+    }
+
+    if (commandName == 'leaderboard') {
+        const top = db.getTop(10)
+        let msg = '**top farmers**\n'
+        for (const [user, time] of top.entries())
+            msg += `${user}: ${Math.floor(time / 3600)}h ${Math.floor((time % 3600) / 60)}m\n`
+        msg = msg.trim()
+        await interaction.reply({
+            embeds: [{ description: msg, }]
         })
     }
 })
