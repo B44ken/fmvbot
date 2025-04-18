@@ -8,11 +8,12 @@ const debug = true
 export class PlayersDB {
     startTime: Map<string, number>
     totalTime: Map<string, number>
+    pervertCount: Map<string, number>
 
     constructor() {
         this.startTime = new Map<string, number>()
         this.totalTime = new Map<string, number>()
-
+        this.pervertCount = new Map<string, number>()
         this.saveRestore()
     }
 
@@ -38,6 +39,17 @@ export class PlayersDB {
         return this.totalTime.get(id) || 0
     }
 
+    getTopTime(n: number = 10): Map<string, number> {
+        const sorted = [...this.totalTime.entries()].sort((a, b) => b[1] - a[1])
+        const top = new Map<string, number>()
+        for(const i in sorted) {
+            if (i == String(n)) break
+            const [id, time] = sorted[i]
+            top.set(id, time)
+        }
+        return top
+    }
+
     saveData(file: string = "playtime.csv") {
         let csv = "user,time\n"
         for (const [id, time] of this.totalTime.entries())
@@ -50,20 +62,20 @@ export class PlayersDB {
         const data = readFileSync(file, 'utf-8')
         const lines = data.split('\n').slice(1)
         for (const line of lines) {
-            const [time, user] = line.split(',')
+            const [time, user, pervert] = line.split(',')
             this.totalTime.set(user, parseInt(time))
+            this.pervertCount.set(user, parseInt(pervert))
         }
         debug && console.log(`restored data from ${file}, entries: ${this.totalTime.size}`)
     }
 
-    getTop(n: number = 10): Map<string, number> {
-        const sorted = [...this.totalTime.entries()].sort((a, b) => b[1] - a[1])
-        const top = new Map<string, number>()
-        for(const i in sorted) {
-            if (i == String(n)) break
-            const [id, time] = sorted[i]
-            top.set(id, time)
-        }
-        return top
+    addPervert(user: string) {
+        const count = this.pervertCount.get(user) || 0
+        this.pervertCount.set(user, count + 1)
+        debug && console.log(`${user}: pervert count: ${count + 1}`)
+    }
+
+    getPervert(user: string) {
+        return this.pervertCount.get(user) || 0
     }
 }

@@ -5,7 +5,7 @@ import { REST, Routes, Client, Events, GatewayIntentBits, ClientUser, Guild } fr
 
 import { PlayersDB } from './db.js'
 const db = new PlayersDB()
-db.getTop(10)
+db.getTopTime(10)
 
 const commands = [
     {
@@ -49,17 +49,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const { commandName, options } = interaction as ChatInputCommandInteraction
 
     if (commandName === 'pervert') {
-        const targetUser = options.getUser('user') ? `<@${options.getUser('user').id}>` : interaction.user.displayName
-        await interaction.reply({
-            embeds: [{
-                description: `**${targetUser} is a pervert**`,
-                image: { url: pervertImage }
-            }]
-        })
+        const target = options.getUser('user')?.id
+        if(target) {
+            db.addPervert(target)
+            await interaction.reply({
+                embeds: [{
+                    description: `**<@${target}> is a pervert**\nand has been accused ${db.getPervert(target)} time(s)`,
+                    image: { url: pervertImage }
+                }]
+            })
+        } else {
+            await interaction.reply({
+                embeds: [{
+                    description: `**${interaction.user.displayName} is a pervert**`,
+                    image: { url: pervertImage }
+                }]
+            })
+        }
     }
 
     if (commandName == 'leaderboard') {
-        const top = db.getTop(10)
+        const top = db.getTopTime(10)
         let msg = '**top farmers**\n'
         for (const [user, time] of top.entries())
             msg += `${user}: ${Math.floor(time / 3600)}h ${Math.floor((time % 3600) / 60)}m\n`
